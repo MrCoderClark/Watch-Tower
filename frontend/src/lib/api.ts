@@ -1,0 +1,68 @@
+import type { AuthResponse, LoginInput, SignupInput, User } from "@/types/auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
+export class ApiError extends Error {
+  status: number;
+  detail: string;
+  constructor(status: number, detail: string) {
+    super(detail);
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  accessToken?: string | null,
+): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (!headers.has("Content-Type") && init.body) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const detail = await res
+      .json()
+      .then((b) => b?.detail ?? res.statusText)
+      .catch(() => res.statusText);
+    throw new ApiError(res.status, typeof detail === "string" ? detail : "Request failed");
+  }
+  if (res.status === 204) return undefined as T;
+  return (await res.json()) as T;
+}
+
+export const api = {
+  signup: (input: SignupInput) =>
+    request<AuthResponse>("/api/v1/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  login: (input: LoginInput) =>
+    request<AuthResponse>("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  refresh: () =>
+    request<AuthResponse>("/api/v1/auth/refresh", {
+      method: "POST",
+    }),
+
+  logout: () =>
+    request<void>("/api/v1/auth/logout", {
+      method: "POST",
+    }),
+
+  me: (accessToken: string) =>
+    request<User>("/api/v1/auth/me", { method: "GET" }, accessToken),
+};

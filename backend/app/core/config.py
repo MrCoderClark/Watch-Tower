@@ -22,7 +22,12 @@ class Settings(BaseSettings):
     refresh_token_days: int = 30
     jwt_algorithm: str = "HS256"
 
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
 
     @property
     def is_dev(self) -> bool:
