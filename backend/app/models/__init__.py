@@ -1,4 +1,5 @@
 from app.db.base import Base
+from app.models.auth import RefreshToken
 from app.models.tenancy import (
     KeyKind,
     Membership,
@@ -18,6 +19,7 @@ __all__ = [
     "Organization",
     "Project",
     "ProjectKey",
+    "RefreshToken",
     "Role",
     "Team",
     "TeamMembership",
