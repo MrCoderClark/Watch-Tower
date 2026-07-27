@@ -18,10 +18,13 @@ from app.models import (
     User,
 )
 from app.schemas.issues import (
+    EventOut,
     FrequencyPoint,
     FrequencyResponse,
+    IssueDetailOut,
     IssueListResponse,
     IssueOut,
+    IssueUpdate,
     ProjectSummary,
 )
 
@@ -95,6 +98,55 @@ async def list_issues(
         items=[IssueOut.model_validate(i) for i in items],
         next_cursor=next_cursor,
     )
+
+
+async def get_issue_detail(
+    session: AsyncSession,
+    project_slug: str,
+    issue_id: UUID,
+    user: User,
+) -> IssueDetailOut:
+    project = await _resolve_project(session, project_slug, user)
+    issue = await session.scalar(
+        select(Issue).where(
+            Issue.project_id == project.id, Issue.id == issue_id
+        )
+    )
+    if issue is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Issue not found")
+
+    sample = await session.scalar(
+        select(Event)
+        .where(Event.issue_id == issue.id)
+        .order_by(Event.occurred_at.desc())
+        .limit(1)
+    )
+    sample_out = EventOut.model_validate(sample) if sample else None
+    return IssueDetailOut(
+        **IssueOut.model_validate(issue).model_dump(),
+        sample_event=sample_out,
+    )
+
+
+async def update_issue(
+    session: AsyncSession,
+    project_slug: str,
+    issue_id: UUID,
+    user: User,
+    data: IssueUpdate,
+) -> IssueOut:
+    project = await _resolve_project(session, project_slug, user)
+    issue = await session.scalar(
+        select(Issue).where(
+            Issue.project_id == project.id, Issue.id == issue_id
+        )
+    )
+    if issue is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Issue not found")
+    issue.status = data.status
+    await session.commit()
+    await session.refresh(issue)
+    return IssueOut.model_validate(issue)
 
 
 async def get_summary(

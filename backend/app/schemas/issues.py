@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class IssueOut(BaseModel):
@@ -22,6 +23,41 @@ class IssueOut(BaseModel):
 class IssueListResponse(BaseModel):
     items: list[IssueOut]
     next_cursor: str | None
+
+
+class EventOut(BaseModel):
+    id: UUID
+    event_id: UUID
+    occurred_at: datetime
+    received_at: datetime
+    environment: str
+    release: str | None
+    platform: str
+    sdk_name: str | None
+    sdk_version: str | None
+    level: str
+    message: str | None
+    exception: dict[str, Any] | None
+    request: dict[str, Any] | None
+    user_: dict[str, Any] | None = Field(default=None, serialization_alias="user")
+    tags: dict[str, Any]
+    contexts: dict[str, Any]
+    breadcrumbs: list[dict[str, Any]]
+    attachments: list[dict[str, Any]]
+    browser_name: str | None
+    browser_version: str | None
+    os_name: str | None
+    os_version: str | None
+
+    model_config = {"from_attributes": True, "populate_by_name": True}
+
+
+class IssueDetailOut(IssueOut):
+    sample_event: EventOut | None
+
+
+class IssueUpdate(BaseModel):
+    status: str = Field(..., pattern="^(unresolved|resolved|ignored)$")
 
 
 class ProjectSummary(BaseModel):

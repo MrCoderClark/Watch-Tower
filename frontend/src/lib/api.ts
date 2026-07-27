@@ -1,8 +1,11 @@
 import type { AuthResponse, LoginInput, SignupInput, User } from "@/types/auth";
 import type {
   FrequencyResponse,
+  Issue,
+  IssueDetail,
   IssueListParams,
   IssueListResponse,
+  IssueUpdate,
   ProjectSummary,
 } from "@/types/issues";
 import type {
@@ -125,6 +128,25 @@ export const api = {
     request<ProjectSummary>(
       `/api/v1/projects/${projectSlug}/summary`,
       { method: "GET" },
+      accessToken,
+    ),
+
+  getIssue: (accessToken: string, projectSlug: string, issueId: string) =>
+    request<IssueDetail>(
+      `/api/v1/projects/${projectSlug}/issues/${issueId}`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  updateIssue: (
+    accessToken: string,
+    projectSlug: string,
+    issueId: string,
+    data: IssueUpdate,
+  ) =>
+    request<Issue>(
+      `/api/v1/projects/${projectSlug}/issues/${issueId}`,
+      { method: "PATCH", body: JSON.stringify(data) },
       accessToken,
     ),
 
