@@ -1,4 +1,9 @@
 import type { AuthResponse, LoginInput, SignupInput, User } from "@/types/auth";
+import type {
+  Org,
+  Project,
+  ProjectCreateInput,
+} from "@/types/workspace";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
@@ -65,4 +70,25 @@ export const api = {
 
   me: (accessToken: string) =>
     request<User>("/api/v1/auth/me", { method: "GET" }, accessToken),
+
+  listOrgs: (accessToken: string) =>
+    request<Org[]>("/api/v1/orgs", { method: "GET" }, accessToken),
+
+  listProjects: (accessToken: string, orgSlug: string) =>
+    request<Project[]>(
+      `/api/v1/orgs/${orgSlug}/projects`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  createProject: (
+    accessToken: string,
+    orgSlug: string,
+    input: ProjectCreateInput,
+  ) =>
+    request<Project>(
+      `/api/v1/orgs/${orgSlug}/projects`,
+      { method: "POST", body: JSON.stringify(input) },
+      accessToken,
+    ),
 };
