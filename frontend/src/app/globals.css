@@ -44,6 +44,7 @@
   --color-wt-text-dim: var(--wt-text-dim);
   --color-wt-accent: var(--wt-accent);
   --color-wt-accent-2: var(--wt-accent-2);
+  --color-wt-accent-active: var(--wt-accent-active);
   --color-wt-danger: var(--wt-danger);
   --color-wt-warn: var(--wt-warn);
   --color-wt-success: var(--wt-success);
@@ -62,20 +63,21 @@
 :root {
   --wt-bg-0: #0a0d14;
   --wt-bg-1: #0f131c;
-  --wt-bg-2: #141926;
-  --wt-bg-3: #1b2130;
-  --wt-border: #232a3b;
-  --wt-border-soft: #1a2030;
+  --wt-bg-2: #171d2c;
+  --wt-bg-3: #1f2638;
+  --wt-border: #262e42;
+  --wt-border-soft: #1c2233;
   --wt-text: #e8ecf4;
   --wt-text-muted: #98a2b8;
   --wt-text-dim: #626b82;
   --wt-accent: #3b82f6;
   --wt-accent-2: #60a5fa;
-  --wt-accent-soft: color-mix(in oklab, var(--wt-accent) 18%, transparent);
+  --wt-accent-soft: color-mix(in oklab, var(--wt-accent) 22%, transparent);
+  --wt-accent-active: color-mix(in oklab, var(--wt-accent) 32%, transparent);
   --wt-danger: #ef4444;
-  --wt-danger-soft: color-mix(in oklab, var(--wt-danger) 14%, transparent);
+  --wt-danger-soft: color-mix(in oklab, var(--wt-danger) 24%, transparent);
   --wt-warn: #f59e0b;
-  --wt-warn-soft: color-mix(in oklab, var(--wt-warn) 14%, transparent);
+  --wt-warn-soft: color-mix(in oklab, var(--wt-warn) 22%, transparent);
   --wt-success: #22c55e;
 
   --background: var(--wt-bg-0);

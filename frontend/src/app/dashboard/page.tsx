@@ -1,88 +1,70 @@
 "use client";
 
-import { AlertTriangle, Gauge, Timer, Users } from "lucide-react";
+import { AlertTriangle, Gauge, Layers, Users } from "lucide-react";
 
+import { ErrorChart } from "@/components/dashboard/error-chart";
+import { IssuesTable } from "@/components/dashboard/issues-table";
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { ServicesDonut } from "@/components/dashboard/services-donut";
+import { UsersBar } from "@/components/dashboard/users-bar";
 import { Header } from "@/components/layout/header";
-import { useAuth } from "@/providers/auth-provider";
-
-const KPIS = [
-  {
-    label: "Unresolved Issues",
-    value: "0",
-    delta: null,
-    tone: "danger" as const,
-    icon: AlertTriangle,
-  },
-  {
-    label: "Total Events",
-    value: "0",
-    delta: null,
-    tone: "neutral" as const,
-    icon: Gauge,
-  },
-  {
-    label: "Affected Users",
-    value: "0",
-    delta: null,
-    tone: "warn" as const,
-    icon: Users,
-  },
-  {
-    label: "Uptime (24h)",
-    value: "—",
-    delta: null,
-    tone: "neutral" as const,
-    icon: Timer,
-  },
-];
-
-const TONE_BG: Record<"neutral" | "danger" | "warn", string> = {
-  neutral: "bg-wt-bg-2",
-  danger: "bg-[color:var(--wt-danger-soft)]",
-  warn: "bg-[color:var(--wt-warn-soft)]",
-};
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   return (
     <>
       <Header
-        title="Overview Dashboard"
-        context={`Signed in as ${user?.email ?? ""}`}
+        title="Error Tracking Dashboard"
+        context="Project: Web App (Prod)"
       />
       <main className="space-y-6 px-8 py-6">
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {KPIS.map(({ label, value, tone, icon: Icon }) => (
-            <div
-              key={label}
-              className={`rounded-xl border border-wt-border ${TONE_BG[tone]} p-5`}
-            >
-              <div className="flex items-start justify-between">
-                <span className="label-caps">{label}</span>
-                <Icon strokeWidth={1.5} className="size-5 text-wt-text-dim" />
-              </div>
-              <div className="num mt-4 text-[44px] font-semibold leading-none tracking-tight text-wt-text">
-                {value}
-              </div>
-              <div className="mt-3 text-xs text-wt-text-dim">No data yet</div>
-            </div>
-          ))}
+          <KpiCard
+            label="Unresolved Issues"
+            value="32"
+            delta="+12%"
+            deltaLabel="since last hour"
+            tone="danger"
+            icon={AlertTriangle}
+          />
+          <KpiCard
+            label="Total Events"
+            value="12.4k"
+            delta="-2%"
+            deltaLabel="since last hour"
+            tone="neutral"
+            icon={Gauge}
+          />
+          <KpiCard
+            label="Affected Users"
+            value="419"
+            delta="+5%"
+            deltaLabel="since last hour"
+            tone="warn"
+            icon={Users}
+          />
+          <KpiCard
+            label="Unique Issues"
+            value="18"
+            tone="neutral"
+            icon={Layers}
+          />
         </section>
 
-        <section className="rounded-xl border border-wt-border bg-wt-bg-2 p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="label-caps">Getting Started</h2>
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <ErrorChart />
           </div>
-          <div className="mt-4 space-y-3 text-sm text-wt-text-muted">
-            <p>
-              You&apos;re signed in. Nothing is being reported yet — that&apos;s
-              expected.
-            </p>
-            <ol className="list-inside list-decimal space-y-1 text-wt-text">
-              <li>Create a project (coming next).</li>
-              <li>Grab a project key and drop the SDK into your app.</li>
-              <li>Watch this dashboard light up.</li>
-            </ol>
+          <div className="lg:col-span-4">
+            <ServicesDonut />
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <IssuesTable />
+          </div>
+          <div className="lg:col-span-4">
+            <UsersBar />
           </div>
         </section>
       </main>
