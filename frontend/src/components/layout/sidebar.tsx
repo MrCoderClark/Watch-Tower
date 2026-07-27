@@ -75,7 +75,10 @@ export function Sidebar() {
 
         <nav className="flex-1 space-y-1 px-2 py-2">
           {NAV.map(({ href, label, icon: Icon, badgeKey }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
+            const active =
+              href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === href || pathname.startsWith(`${href}/`);
             const badge =
               badgeKey === "issues" && unresolvedCount > 0
                 ? unresolvedCount

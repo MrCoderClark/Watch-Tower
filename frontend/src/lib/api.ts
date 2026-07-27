@@ -6,6 +6,11 @@ import type {
   ProjectSummary,
 } from "@/types/issues";
 import type {
+  ProjectKey,
+  ProjectKeyCreated,
+  ProjectKeyCreateInput,
+} from "@/types/keys";
+import type {
   Org,
   Project,
   ProjectCreateInput,
@@ -131,6 +136,31 @@ export const api = {
     request<FrequencyResponse>(
       `/api/v1/projects/${projectSlug}/frequency?range=${range}`,
       { method: "GET" },
+      accessToken,
+    ),
+
+  listKeys: (accessToken: string, projectSlug: string) =>
+    request<ProjectKey[]>(
+      `/api/v1/projects/${projectSlug}/keys`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  createKey: (
+    accessToken: string,
+    projectSlug: string,
+    input: ProjectKeyCreateInput,
+  ) =>
+    request<ProjectKeyCreated>(
+      `/api/v1/projects/${projectSlug}/keys`,
+      { method: "POST", body: JSON.stringify(input) },
+      accessToken,
+    ),
+
+  revokeKey: (accessToken: string, projectSlug: string, keyId: string) =>
+    request<void>(
+      `/api/v1/projects/${projectSlug}/keys/${keyId}`,
+      { method: "DELETE" },
       accessToken,
     ),
 };
