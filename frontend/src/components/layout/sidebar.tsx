@@ -26,7 +26,7 @@ import { useWorkspace } from "@/providers/workspace-provider";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/issues", label: "Issues", icon: FileText, badge: 7 },
+  { href: "/dashboard/issues", label: "Issues", icon: FileText, badgeKey: "issues" as const },
   { href: "/dashboard/releases", label: "Releases", icon: Package },
   { href: "/dashboard/performance", label: "Performance", icon: Zap },
   { href: "/dashboard/traces", label: "Traces", icon: Rows3 },
@@ -56,6 +56,8 @@ export function Sidebar() {
   const currentProject =
     workspace.status === "ready" ? workspace.currentProject : null;
   const projects = workspace.status === "ready" ? workspace.projects : [];
+  const unresolvedCount =
+    workspace.status === "ready" ? workspace.summary?.unresolved_count ?? 0 : 0;
 
   return (
     <>
@@ -72,8 +74,12 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 space-y-1 px-2 py-2">
-          {NAV.map(({ href, label, icon: Icon, badge }) => {
+          {NAV.map(({ href, label, icon: Icon, badgeKey }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
+            const badge =
+              badgeKey === "issues" && unresolvedCount > 0
+                ? unresolvedCount
+                : undefined;
             return (
               <Link
                 key={href}

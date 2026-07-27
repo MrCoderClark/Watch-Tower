@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -11,29 +12,34 @@ import {
 } from "recharts";
 import { ChevronDown, Search } from "lucide-react";
 
-const DATA = [
-  { t: "00:00", v: 40 },
-  { t: "01:00", v: 60 },
-  { t: "02:00", v: 55 },
-  { t: "03:00", v: 70 },
-  { t: "04:00", v: 90 },
-  { t: "05:00", v: 120 },
-  { t: "06:00", v: 100 },
-  { t: "07:00", v: 130 },
-  { t: "08:00", v: 180 },
-  { t: "09:00", v: 220 },
-  { t: "10:00", v: 260 },
-  { t: "11:00", v: 300 },
-  { t: "12:00", v: 340 },
-  { t: "13:00", v: 480 },
-  { t: "14:00", v: 830 },
-  { t: "15:00", v: 460 },
-  { t: "16:00", v: 380 },
-  { t: "17:00", v: 850 },
-  { t: "18:00", v: 220 },
-  { t: "19:00", v: 140 },
-  { t: "20:00", v: 90 },
-];
+import { api } from "@/lib/api";
+import { useAuth } from "@/providers/auth-provider";
+import { useWorkspace } from "@/providers/workspace-provider";
+
+type Point = { t: string; label: string; v: number };
+
+function bucketize(points: { t: string; count: number }[]): Point[] {
+  // Fill in the last 24 hours so a mostly-empty project still draws a full axis.
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  const map = new Map<string, number>();
+  for (const p of points) {
+    const d = new Date(p.t);
+    d.setMinutes(0, 0, 0);
+    map.set(d.toISOString(), (map.get(d.toISOString()) ?? 0) + p.count);
+  }
+  const out: Point[] = [];
+  for (let i = 23; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 60 * 60 * 1000);
+    const iso = d.toISOString();
+    out.push({
+      t: iso,
+      label: `${String(d.getHours()).padStart(2, "0")}:00`,
+      v: map.get(iso) ?? 0,
+    });
+  }
+  return out;
+}
 
 function ChartTooltip({
   active,
@@ -58,6 +64,31 @@ function ChartTooltip({
 }
 
 export function ErrorChart() {
+  const { accessToken } = useAuth();
+  const workspace = useWorkspace();
+  const projectSlug =
+    workspace.status === "ready" ? workspace.currentProject?.slug : undefined;
+  const [data, setData] = useState<Point[]>(() => bucketize([]));
+
+  useEffect(() => {
+    if (!accessToken || !projectSlug) return;
+    let cancelled = false;
+    api
+      .projectFrequency(accessToken, projectSlug, "24h")
+      .then((res) => {
+        if (!cancelled) setData(bucketize(res.points));
+      })
+      .catch(() => {
+        if (!cancelled) setData(bucketize([]));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, projectSlug]);
+
+  const maxV = Math.max(...data.map((p) => p.v), 10);
+  const yMax = Math.ceil(maxV * 1.15);
+
   return (
     <div className="rounded-xl border border-wt-border bg-wt-bg-2">
       <div className="px-6 pt-5">
@@ -66,7 +97,7 @@ export function ErrorChart() {
       <div className="h-72 px-2 pt-4">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            data={DATA}
+            data={data}
             margin={{ top: 10, right: 20, left: 0, bottom: 4 }}
           >
             <defs>
@@ -81,7 +112,7 @@ export function ErrorChart() {
               vertical={false}
             />
             <XAxis
-              dataKey="t"
+              dataKey="label"
               tick={{ fill: "#626B82", fontSize: 11 }}
               tickLine={false}
               axisLine={false}
@@ -92,8 +123,8 @@ export function ErrorChart() {
               tickLine={false}
               axisLine={false}
               width={44}
-              domain={[0, 900]}
-              ticks={[0, 250, 500, 750, 900]}
+              domain={[0, yMax]}
+              allowDecimals={false}
             />
             <Tooltip
               content={<ChartTooltip />}
@@ -115,6 +146,7 @@ export function ErrorChart() {
                 strokeWidth: 2,
                 fill: "#0F131C",
               }}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>

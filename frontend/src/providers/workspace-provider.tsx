@@ -11,6 +11,7 @@ import {
 
 import { api } from "@/lib/api";
 import { useAuth } from "@/providers/auth-provider";
+import type { ProjectSummary } from "@/types/issues";
 import type { Org, Project, ProjectCreateInput } from "@/types/workspace";
 
 const CURRENT_PROJECT_KEY = "wt.current_project_slug";
@@ -24,6 +25,7 @@ type WorkspaceState =
       currentOrg: Org;
       projects: Project[];
       currentProject: Project | null;
+      summary: ProjectSummary | null;
     };
 
 type WorkspaceContextValue = WorkspaceState & {
@@ -55,12 +57,21 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           : null;
       const currentProject =
         projects.find((p) => p.slug === savedSlug) ?? projects[0] ?? null;
+      let summary: ProjectSummary | null = null;
+      if (currentProject) {
+        try {
+          summary = await api.projectSummary(accessToken, currentProject.slug);
+        } catch {
+          summary = null;
+        }
+      }
       setState({
         status: "ready",
         orgs,
         currentOrg,
         projects,
         currentProject,
+        summary,
       });
     } catch (err) {
       setState({
@@ -74,17 +85,33 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     if (authStatus === "authenticated") void load();
   }, [authStatus, load]);
 
-  const setCurrentProject = useCallback((slug: string) => {
-    setState((prev) => {
-      if (prev.status !== "ready") return prev;
-      const next = prev.projects.find((p) => p.slug === slug);
-      if (!next) return prev;
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(CURRENT_PROJECT_KEY, slug);
+  const setCurrentProject = useCallback(
+    (slug: string) => {
+      setState((prev) => {
+        if (prev.status !== "ready") return prev;
+        const next = prev.projects.find((p) => p.slug === slug);
+        if (!next) return prev;
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(CURRENT_PROJECT_KEY, slug);
+        }
+        return { ...prev, currentProject: next, summary: null };
+      });
+      // Refresh the summary for the newly-selected project.
+      if (accessToken) {
+        api
+          .projectSummary(accessToken, slug)
+          .then((summary) => {
+            setState((prev) =>
+              prev.status === "ready" && prev.currentProject?.slug === slug
+                ? { ...prev, summary }
+                : prev,
+            );
+          })
+          .catch(() => {});
       }
-      return { ...prev, currentProject: next };
-    });
-  }, []);
+    },
+    [accessToken],
+  );
 
   const createProject = useCallback(
     async (input: ProjectCreateInput): Promise<Project> => {
@@ -102,6 +129,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           projects: [...prev.projects, project],
           currentProject: project,
+          summary: null,
         };
       });
       if (typeof window !== "undefined") {

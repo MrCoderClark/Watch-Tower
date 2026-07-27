@@ -1,5 +1,11 @@
 import type { AuthResponse, LoginInput, SignupInput, User } from "@/types/auth";
 import type {
+  FrequencyResponse,
+  IssueListParams,
+  IssueListResponse,
+  ProjectSummary,
+} from "@/types/issues";
+import type {
   Org,
   Project,
   ProjectCreateInput,
@@ -89,6 +95,42 @@ export const api = {
     request<Project>(
       `/api/v1/orgs/${orgSlug}/projects`,
       { method: "POST", body: JSON.stringify(input) },
+      accessToken,
+    ),
+
+  listIssues: (
+    accessToken: string,
+    projectSlug: string,
+    params: IssueListParams = {},
+  ) => {
+    const search = new URLSearchParams();
+    if (params.status) search.set("status", params.status);
+    if (params.q) search.set("q", params.q);
+    if (params.cursor) search.set("cursor", params.cursor);
+    if (params.limit) search.set("limit", String(params.limit));
+    const qs = search.toString();
+    return request<IssueListResponse>(
+      `/api/v1/projects/${projectSlug}/issues${qs ? `?${qs}` : ""}`,
+      { method: "GET" },
+      accessToken,
+    );
+  },
+
+  projectSummary: (accessToken: string, projectSlug: string) =>
+    request<ProjectSummary>(
+      `/api/v1/projects/${projectSlug}/summary`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  projectFrequency: (
+    accessToken: string,
+    projectSlug: string,
+    range: "24h" | "7d" | "30d" = "24h",
+  ) =>
+    request<FrequencyResponse>(
+      `/api/v1/projects/${projectSlug}/frequency?range=${range}`,
+      { method: "GET" },
       accessToken,
     ),
 };
