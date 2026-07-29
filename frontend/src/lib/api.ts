@@ -24,6 +24,7 @@ import type {
   UptimeCheckUpdate,
 } from "@/types/uptime";
 import type { LogListParams, LogListResponse } from "@/types/logs";
+import type { HostMetricsSeries, HostRow } from "@/types/hosts";
 import type {
   Org,
   Project,
@@ -260,6 +261,26 @@ export const api = {
     request<void>(
       `/api/v1/projects/${projectSlug}/uptime/checks/${checkId}`,
       { method: "DELETE" },
+      accessToken,
+    ),
+
+  listHosts: (accessToken: string, projectSlug: string) =>
+    request<HostRow[]>(
+      `/api/v1/projects/${projectSlug}/hosts`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  getHostMetrics: (
+    accessToken: string,
+    projectSlug: string,
+    hostId: string,
+    metric: string,
+    range: string,
+  ) =>
+    request<HostMetricsSeries>(
+      `/api/v1/projects/${projectSlug}/hosts/${hostId}/metrics?metric=${metric}&range=${range}`,
+      { method: "GET" },
       accessToken,
     ),
 
