@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 
 import httpx
 
+from .tracing import Transaction, start_span, start_transaction  # noqa: F401
+
 __version__ = "0.1.0"
 _SDK_INFO = {"name": "watchtower.python", "version": __version__}
 
@@ -93,6 +95,24 @@ def _send(event: dict) -> None:
             _cfg["url"],
             headers={"X-Watchtower-Key": _cfg["key"]},
             json=[final],
+        )
+    except Exception:
+        pass
+
+
+def _send_transaction(txn: Transaction) -> None:
+    if _cfg is None or _client is None:
+        return
+    envelope = txn.to_envelope(
+        environment=_cfg["environment"],
+        release=_cfg["release"],
+        sdk=_SDK_INFO,
+    )
+    try:
+        _client.post(
+            _cfg["url"].replace("/events", "/transactions"),
+            headers={"X-Watchtower-Key": _cfg["key"]},
+            json=[envelope],
         )
     except Exception:
         pass

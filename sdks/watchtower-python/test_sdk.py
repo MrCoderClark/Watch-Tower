@@ -83,8 +83,30 @@ def test_dsn_missing_key_raises():
     raise AssertionError("expected ValueError")
 
 
+def test_start_transaction_with_spans():
+    wt._reset()
+    wt.init(dsn="http://localhost:8000/wt_pub_test", install_excepthook=False)
+    sent = _patch_client()
+    with wt.start_transaction("GET /demo", op="http.server") as txn:
+        with wt.start_span("db.query", "SELECT 1"):
+            pass
+        with wt.start_span("db.query", "SELECT 2"):
+            pass
+    assert len(sent) == 1
+    assert sent[0]["url"].endswith("/api/v1/ingest/transactions")
+    [env] = sent[0]["body"]
+    assert env["name"] == "GET /demo"
+    assert env["op"] == "http.server"
+    assert env["status"] == "ok"
+    assert len(env["spans"]) == 2
+    assert env["spans"][0]["op"] == "db.query"
+    assert env["spans"][0]["description"] == "SELECT 1"
+    print("start_transaction OK")
+
+
 if __name__ == "__main__":
     test_capture_exception()
     test_capture_message()
     test_dsn_missing_key_raises()
+    test_start_transaction_with_spans()
     print("all checks passed")
