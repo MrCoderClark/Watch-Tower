@@ -94,6 +94,28 @@ def test_dsn_missing_key_raises():
     raise AssertionError("expected ValueError")
 
 
+def test_log_handler():
+    import logging
+    from watchtower_sdk.logging import WatchtowerLogHandler
+
+    wt._reset()
+    wt.init(dsn="http://localhost:8000/wt_pub_test", install_excepthook=False)
+    sent = _patch_client()
+    logger = logging.getLogger("test.demo")
+    logger.addHandler(WatchtowerLogHandler())
+    logger.setLevel(logging.INFO)
+    logger.info("hello from tests", extra={"user_id": "42"})
+    _flush()
+    assert len(sent) == 1
+    assert sent[0]["url"].endswith("/api/v1/ingest/logs")
+    [env] = sent[0]["body"]
+    assert env["level"] == "info"
+    assert env["service"] == "test.demo"
+    assert env["message"] == "hello from tests"
+    assert env["attributes"]["user_id"] == "42"
+    print("log_handler OK")
+
+
 def test_start_transaction_with_spans():
     wt._reset()
     wt.init(dsn="http://localhost:8000/wt_pub_test", install_excepthook=False)
@@ -120,5 +142,6 @@ if __name__ == "__main__":
     test_capture_exception()
     test_capture_message()
     test_dsn_missing_key_raises()
+    test_log_handler()
     test_start_transaction_with_spans()
     print("all checks passed")

@@ -7,8 +7,10 @@ from app.db.session import get_session
 from app.models import Project
 from app.monitoring.pipeline import ingest_events
 from app.schemas.envelope import EventEnvelope, IngestAck
+from app.schemas.logs import LogEnvelope, LogIngestAck
 from app.schemas.transaction import TransactionEnvelope, TransactionIngestAck
 from app.services import keys as key_service
+from app.services.logs import ingest_logs
 from app.services.transactions import ingest_transactions
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
@@ -54,3 +56,16 @@ async def ingest_transactions_route(
     if not transactions:
         return TransactionIngestAck(received=0, transaction_ids=[])
     return await ingest_transactions(session, project, transactions)
+
+
+@router.post(
+    "/logs",
+    response_model=LogIngestAck,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def ingest_logs_route(
+    logs: list[LogEnvelope],
+    project: Annotated[Project, Depends(_project_from_key)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> LogIngestAck:
+    return await ingest_logs(session, project, logs)
