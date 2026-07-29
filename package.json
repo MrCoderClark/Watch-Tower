@@ -1,0 +1,5 @@
+{
+  "name": "watchtower-monorepo",
+  "private": true,
+  "workspaces": ["frontend", "sdks/watchtower-js"]
+}
