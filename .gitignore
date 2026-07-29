@@ -3,9 +3,15 @@
 .env.*
 !.env.example
 
+# Node — root also hoists deps via npm workspaces
+node_modules/
+
 # Frontend
-frontend/node_modules/
 frontend/.next/
+
+# SDKs
+sdks/**/dist/
+sdks/**/*.egg-info/
 
 # Backend
 backend/.venv/

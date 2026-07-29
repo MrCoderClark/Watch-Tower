@@ -12,11 +12,14 @@ Foundational tenancy layer everything else assumes.
 - `POST /api/v1/auth/logout` — revokes refresh.
 - `POST /api/v1/auth/forgot` / `POST /api/v1/auth/reset` — email token flow.
 
-Passwords hashed with `passlib[bcrypt]`, cost 12. JWT signed with HS256 using
-`WATCHTOWER_SECRET_KEY`.
+Passwords hashed with `bcrypt` directly, cost 12. `passlib` was in the original
+plan but breaks against `bcrypt` 4.x at import — dropped for a ~4-line direct call.
+JWT signed with HS256 using `WATCHTOWER_SECRET_KEY`.
 
-Frontend uses Auth.js with a Credentials provider hitting these endpoints; Auth.js
-stores the access token in a session cookie.
+Frontend uses an in-house `AuthProvider` (React context) that talks directly to
+these endpoints — access token held in memory, refresh token in the http-only
+cookie the backend sets. Auth.js is installed but unused; it comes back when we
+add OAuth providers.
 
 ## Roles
 

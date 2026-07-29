@@ -22,10 +22,19 @@ UI. Reference mockup: `docs/Designs/Design-1.png`.
 ## Stack (locked)
 
 **Backend:** Python 3.13+, FastAPI, SQLAlchemy 2.0 async, asyncpg, Alembic, Pydantic v2,
-pydantic-settings, uv. Auth via JWT (python-jose) + passlib. Logs via loguru.
-**Frontend:** Next.js App Router, TypeScript strict, Tailwind, shadcn/ui, Auth.js,
-TanStack Query, React Hook Form, Zod.
+pydantic-settings, uv. Auth via JWT (python-jose) + `bcrypt` directly (passlib swapped
+out — it fails against bcrypt 4.x at import time). loguru is in deps for future use.
+**Frontend:** Next.js 16 (App Router), TypeScript strict, Tailwind v4, shadcn/ui,
+Recharts, React Hook Form, Zod. Auth is a small in-house AuthProvider that talks
+directly to `/api/v1/auth/*` — access token in memory, refresh token as an
+http-only cookie. `next-auth` is installed but not wired; will come with OAuth.
 **DB:** Neon Postgres (connection string in `backend/.env.local`).
+
+Two Neon/Next.js gotchas that already bit us:
+- Neon's copy-paste URL uses libpq `sslmode=…`; asyncpg rejects it. The DSN is
+  sanitized in `app/db/session.py` — paste Neon URLs verbatim, don't strip.
+- Point the frontend at `http://localhost:8000` (not `127.0.0.1`); the refresh
+  cookie is host-scoped and SameSite=Lax, so a mixed host breaks session reload.
 
 Do not swap parts of the stack without an ADR in `docs/adr/`.
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
 import { AuthProvider } from "@/providers/auth-provider";
+import { WatchtowerProvider } from "@/providers/watchtower-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,7 +37,9 @@ export default function RootLayout({
       className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <WatchtowerProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </WatchtowerProvider>
       </body>
     </html>
   );

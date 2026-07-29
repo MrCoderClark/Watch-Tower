@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1 import api_router
 from app.core.config import get_settings
 from app.db.session import engine, get_session
+from watchtower_sdk import init as wt_init
+from watchtower_sdk.fastapi import WatchtowerMiddleware
 
 
 @asynccontextmanager
@@ -33,6 +35,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if settings.internal_dsn:
+    wt_init(dsn=settings.internal_dsn, environment=settings.environment, install_excepthook=False)
+    app.add_middleware(WatchtowerMiddleware)
 
 app.include_router(api_router)
 
