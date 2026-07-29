@@ -1,6 +1,7 @@
 from app.db.base import Base
 from app.models.auth import RefreshToken
 from app.models.events import Event, Issue, IssueStatus, Level
+from app.models.performance import Span, Transaction
 from app.models.tenancy import (
     KeyKind,
     Membership,
@@ -26,7 +27,9 @@ __all__ = [
     "ProjectKey",
     "RefreshToken",
     "Role",
+    "Span",
     "Team",
     "TeamMembership",
+    "Transaction",
     "User",
 ]
