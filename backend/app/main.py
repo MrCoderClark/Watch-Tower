@@ -10,6 +10,7 @@ from app.core.config import get_settings
 from app.db.session import engine, get_session
 from watchtower_sdk import init as wt_init
 from watchtower_sdk.fastapi import WatchtowerMiddleware
+from watchtower_sdk.sqlalchemy import instrument_engine as wt_instrument_engine
 
 
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.add_middleware(
 if settings.internal_dsn:
     wt_init(dsn=settings.internal_dsn, environment=settings.environment, install_excepthook=False)
     app.add_middleware(WatchtowerMiddleware)
+    wt_instrument_engine(engine)
 
 app.include_router(api_router)
 

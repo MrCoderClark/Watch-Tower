@@ -7,7 +7,9 @@ from app.db.session import get_session
 from app.models import Project
 from app.monitoring.pipeline import ingest_events
 from app.schemas.envelope import EventEnvelope, IngestAck
+from app.schemas.transaction import TransactionEnvelope, TransactionIngestAck
 from app.services import keys as key_service
+from app.services.transactions import ingest_transactions
 
 router = APIRouter(prefix="/ingest", tags=["ingest"])
 
@@ -37,3 +39,18 @@ async def ingest(
     if not events:
         return IngestAck(received=0, issue_ids=[], event_ids=[])
     return await ingest_events(session, project, events)
+
+
+@router.post(
+    "/transactions",
+    response_model=TransactionIngestAck,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def ingest_transactions_route(
+    transactions: list[TransactionEnvelope],
+    project: Annotated[Project, Depends(_project_from_key)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TransactionIngestAck:
+    if not transactions:
+        return TransactionIngestAck(received=0, transaction_ids=[])
+    return await ingest_transactions(session, project, transactions)

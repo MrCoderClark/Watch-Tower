@@ -30,6 +30,9 @@ _url, _connect_args = _prepare_asyncpg_url(settings.database_url)
 engine = create_async_engine(
     _url,
     pool_pre_ping=True,
+    pool_size=20,
+    max_overflow=30,
+    pool_recycle=1800,  # Neon closes idle sockets ~5min; recycle every 30min
     echo=False,
     connect_args=_connect_args,
 )

@@ -16,15 +16,24 @@ import watchtower_sdk as wt
 
 def _patch_client():
     sent = []
-    client = MagicMock()
 
-    def _post(url, headers=None, json=None):
-        sent.append({"url": url, "headers": headers, "body": json})
-        return MagicMock(status_code=202)
+    def _capture(kind, batch):
+        if not batch:
+            return
+        sent.append(
+            {
+                "url": wt._endpoint_url(kind),
+                "headers": {"X-Watchtower-Key": wt._cfg["key"]},
+                "body": list(batch),
+            }
+        )
 
-    client.post.side_effect = _post
-    wt._client = client
+    wt._do_post = _capture
     return sent
+
+
+def _flush():
+    wt._flush_all()
 
 
 def test_capture_exception():
@@ -41,6 +50,7 @@ def test_capture_exception():
         raise ValueError("boom")
     except ValueError:
         eid = wt.capture_exception()
+    _flush()
 
     assert eid is not None
     assert len(sent) == 1
@@ -65,6 +75,7 @@ def test_capture_message():
     wt.init(dsn="http://localhost:8000/wt_pub_test", install_excepthook=False)
     sent = _patch_client()
     eid = wt.capture_message("hello", level="warning")
+    _flush()
     assert eid is not None
     [event] = sent[0]["body"]
     assert event["message"] == "hello"
@@ -83,8 +94,31 @@ def test_dsn_missing_key_raises():
     raise AssertionError("expected ValueError")
 
 
+def test_start_transaction_with_spans():
+    wt._reset()
+    wt.init(dsn="http://localhost:8000/wt_pub_test", install_excepthook=False)
+    sent = _patch_client()
+    with wt.start_transaction("GET /demo", op="http.server") as txn:
+        with wt.start_span("db.query", "SELECT 1"):
+            pass
+        with wt.start_span("db.query", "SELECT 2"):
+            pass
+    _flush()
+    assert len(sent) == 1
+    assert sent[0]["url"].endswith("/api/v1/ingest/transactions")
+    [env] = sent[0]["body"]
+    assert env["name"] == "GET /demo"
+    assert env["op"] == "http.server"
+    assert env["status"] == "ok"
+    assert len(env["spans"]) == 2
+    assert env["spans"][0]["op"] == "db.query"
+    assert env["spans"][0]["description"] == "SELECT 1"
+    print("start_transaction OK")
+
+
 if __name__ == "__main__":
     test_capture_exception()
     test_capture_message()
     test_dsn_missing_key_raises()
+    test_start_transaction_with_spans()
     print("all checks passed")
