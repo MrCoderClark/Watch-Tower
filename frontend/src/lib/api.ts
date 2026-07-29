@@ -23,6 +23,7 @@ import type {
   UptimeCheckCreate,
   UptimeCheckUpdate,
 } from "@/types/uptime";
+import type { LogListParams, LogListResponse } from "@/types/logs";
 import type {
   Org,
   Project,
@@ -261,4 +262,26 @@ export const api = {
       { method: "DELETE" },
       accessToken,
     ),
+
+  listLogs: (
+    accessToken: string,
+    projectSlug: string,
+    params: LogListParams = {},
+  ) => {
+    const search = new URLSearchParams();
+    if (params.q) search.set("q", params.q);
+    if (params.level) search.set("level", params.level);
+    if (params.service) search.set("service", params.service);
+    if (params.trace_id) search.set("trace_id", params.trace_id);
+    if (params.from) search.set("from", params.from);
+    if (params.to) search.set("to", params.to);
+    if (params.cursor) search.set("cursor", params.cursor);
+    if (params.limit) search.set("limit", String(params.limit));
+    const qs = search.toString();
+    return request<LogListResponse>(
+      `/api/v1/projects/${projectSlug}/logs${qs ? `?${qs}` : ""}`,
+      { method: "GET" },
+      accessToken,
+    );
+  },
 };
