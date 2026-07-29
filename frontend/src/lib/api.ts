@@ -18,7 +18,11 @@ import type {
   TransactionAgg,
   TransactionDetail,
 } from "@/types/transactions";
-import type { UptimeCheck, UptimeCheckCreate } from "@/types/uptime";
+import type {
+  UptimeCheck,
+  UptimeCheckCreate,
+  UptimeCheckUpdate,
+} from "@/types/uptime";
 import type {
   Org,
   Project,
@@ -232,6 +236,29 @@ export const api = {
     request<UptimeCheck>(
       `/api/v1/projects/${projectSlug}/uptime/checks`,
       { method: "POST", body: JSON.stringify(input) },
+      accessToken,
+    ),
+
+  updateUptimeCheck: (
+    accessToken: string,
+    projectSlug: string,
+    checkId: string,
+    input: UptimeCheckUpdate,
+  ) =>
+    request<UptimeCheck>(
+      `/api/v1/projects/${projectSlug}/uptime/checks/${checkId}`,
+      { method: "PATCH", body: JSON.stringify(input) },
+      accessToken,
+    ),
+
+  deleteUptimeCheck: (
+    accessToken: string,
+    projectSlug: string,
+    checkId: string,
+  ) =>
+    request<void>(
+      `/api/v1/projects/${projectSlug}/uptime/checks/${checkId}`,
+      { method: "DELETE" },
       accessToken,
     ),
 };

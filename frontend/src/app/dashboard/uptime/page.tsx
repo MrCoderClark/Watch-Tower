@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Header } from "@/components/layout/header";
 import { api, ApiError } from "@/lib/api";
@@ -10,7 +10,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { useWorkspace } from "@/providers/workspace-provider";
 import type { UptimeCheck } from "@/types/uptime";
 
-const GRID = "grid-cols-[32px_minmax(0,1fr)_100px_100px_140px] gap-x-6";
+const GRID = "grid-cols-[32px_minmax(0,1fr)_100px_100px_140px_72px] gap-x-6";
 
 function statusDot(status: UptimeCheck["last_status"]): string {
   if (status === "up") return "bg-wt-success";
@@ -29,6 +29,7 @@ export default function UptimePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [interval, setInterval] = useState(60);
@@ -50,11 +51,37 @@ export default function UptimePage() {
 
   useEffect(() => {
     void load();
-    // Refresh every 15s so up/down state stays fresh without a hard reload.
     const t = window.setInterval(load, 15_000);
     return () => window.clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, projectSlug]);
+
+  function resetForm() {
+    setEditingId(null);
+    setName("");
+    setUrl("");
+    setInterval(60);
+    setShowForm(false);
+  }
+
+  function beginEdit(c: UptimeCheck) {
+    setEditingId(c.id);
+    setName(c.name);
+    setUrl(c.url);
+    setInterval(c.interval_seconds);
+    setShowForm(true);
+  }
+
+  async function remove(id: string) {
+    if (!accessToken || !projectSlug) return;
+    try {
+      await api.deleteUptimeCheck(accessToken, projectSlug, id);
+      setChecks((prev) => prev.filter((c) => c.id !== id));
+      if (editingId === id) resetForm();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.detail : "Failed to delete");
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,18 +89,23 @@ export default function UptimePage() {
     setSubmitting(true);
     setError(null);
     try {
-      await api.createUptimeCheck(accessToken, projectSlug, {
-        name,
-        url,
-        interval_seconds: interval,
-      });
-      setName("");
-      setUrl("");
-      setInterval(60);
-      setShowForm(false);
+      if (editingId) {
+        await api.updateUptimeCheck(accessToken, projectSlug, editingId, {
+          name,
+          url,
+          interval_seconds: interval,
+        });
+      } else {
+        await api.createUptimeCheck(accessToken, projectSlug, {
+          name,
+          url,
+          interval_seconds: interval,
+        });
+      }
+      resetForm();
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Failed to create");
+      setError(err instanceof ApiError ? err.detail : "Failed to save");
     } finally {
       setSubmitting(false);
     }
@@ -93,7 +125,7 @@ export default function UptimePage() {
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={() => setShowForm((s) => !s)}
+            onClick={() => (showForm ? resetForm() : setShowForm(true))}
             className="inline-flex h-9 items-center gap-1 rounded-md border border-wt-border bg-wt-bg-2 px-3 text-sm text-wt-text hover:bg-wt-bg-3"
           >
             <Plus className="size-4" />
@@ -134,7 +166,7 @@ export default function UptimePage() {
               disabled={submitting}
               className="h-9 rounded-md bg-wt-accent-active px-3 text-sm text-wt-text disabled:opacity-60"
             >
-              {submitting ? "Saving…" : "Save"}
+              {submitting ? "Saving…" : editingId ? "Update" : "Save"}
             </button>
           </form>
         )}
@@ -154,6 +186,7 @@ export default function UptimePage() {
             <span className="text-right">Uptime 24h</span>
             <span className="text-right">p95</span>
             <span className="text-right">Last check</span>
+            <span />
           </div>
 
           {!loading && checks.length === 0 && !error && (
@@ -165,7 +198,10 @@ export default function UptimePage() {
           {checks.map((c) => (
             <div
               key={c.id}
-              className={`grid ${GRID} items-center border-b border-wt-border-soft px-6 py-4 text-sm last:border-b-0`}
+              className={cn(
+                `grid ${GRID} items-center border-b border-wt-border-soft px-6 py-4 text-sm last:border-b-0`,
+                editingId === c.id && "bg-wt-bg-3/40",
+              )}
             >
               <span
                 className={cn(
@@ -188,6 +224,24 @@ export default function UptimePage() {
                 {c.last_checked_at
                   ? new Date(c.last_checked_at).toLocaleTimeString()
                   : "pending"}
+              </span>
+              <span className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => beginEdit(c)}
+                  aria-label={`Edit ${c.name}`}
+                  className="text-wt-text-dim hover:text-wt-text"
+                >
+                  <Pencil className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remove(c.id)}
+                  aria-label={`Delete ${c.name}`}
+                  className="text-wt-text-dim hover:text-wt-danger"
+                >
+                  <Trash2 className="size-4" />
+                </button>
               </span>
             </div>
           ))}

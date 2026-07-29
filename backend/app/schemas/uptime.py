@@ -10,6 +10,13 @@ class UptimeCheckCreate(BaseModel):
     interval_seconds: int = Field(default=60, ge=30, le=3600)
 
 
+class UptimeCheckUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    url: HttpUrl | None = None
+    interval_seconds: int | None = Field(default=None, ge=30, le=3600)
+    is_enabled: bool | None = None
+
+
 class UptimeCheckOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

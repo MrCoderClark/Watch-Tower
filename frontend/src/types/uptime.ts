@@ -16,3 +16,10 @@ export interface UptimeCheckCreate {
   url: string;
   interval_seconds?: number;
 }
+
+export interface UptimeCheckUpdate {
+  name?: string;
+  url?: string;
+  interval_seconds?: number;
+  is_enabled?: boolean;
+}

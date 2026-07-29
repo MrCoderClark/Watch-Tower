@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, case, func, select
+from sqlalchemy import and_, case, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
@@ -17,7 +17,7 @@ from app.models import (
     UptimeResult,
     User,
 )
-from app.schemas.uptime import UptimeCheckCreate, UptimeCheckOut
+from app.schemas.uptime import UptimeCheckCreate, UptimeCheckOut, UptimeCheckUpdate
 
 
 async def _resolve_project(
@@ -110,3 +110,45 @@ async def create_check(
     await session.commit()
     await session.refresh(check)
     return check
+
+
+async def update_check(
+    session: AsyncSession,
+    project_slug: str,
+    user: User,
+    check_id: UUID,
+    data: UptimeCheckUpdate,
+) -> UptimeCheck:
+    project = await _resolve_project(session, project_slug, user)
+    check = await session.scalar(
+        select(UptimeCheck).where(
+            UptimeCheck.id == check_id, UptimeCheck.project_id == project.id
+        )
+    )
+    if check is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Check not found")
+    updates = data.model_dump(exclude_unset=True)
+    if "url" in updates and updates["url"] is not None:
+        updates["url"] = str(updates["url"])
+    for k, v in updates.items():
+        setattr(check, k, v)
+    # If URL/interval changed, retry sooner rather than waiting for next_run_at.
+    if {"url", "interval_seconds", "is_enabled"} & updates.keys():
+        check.next_run_at = None
+    await session.commit()
+    await session.refresh(check)
+    return check
+
+
+async def delete_check(
+    session: AsyncSession, project_slug: str, user: User, check_id: UUID
+) -> None:
+    project = await _resolve_project(session, project_slug, user)
+    result = await session.execute(
+        delete(UptimeCheck).where(
+            UptimeCheck.id == check_id, UptimeCheck.project_id == project.id
+        )
+    )
+    if result.rowcount == 0:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Check not found")
+    await session.commit()
