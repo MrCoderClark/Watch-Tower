@@ -14,6 +14,11 @@ import type {
   ProjectKeyCreateInput,
 } from "@/types/keys";
 import type {
+  SlowTransactionRow,
+  TransactionAgg,
+  TransactionDetail,
+} from "@/types/transactions";
+import type {
   Org,
   Project,
   ProjectCreateInput,
@@ -183,6 +188,31 @@ export const api = {
     request<void>(
       `/api/v1/projects/${projectSlug}/keys/${keyId}`,
       { method: "DELETE" },
+      accessToken,
+    ),
+
+  listTransactions: (accessToken: string, projectSlug: string, hours = 24) =>
+    request<TransactionAgg[]>(
+      `/api/v1/projects/${projectSlug}/transactions?hours=${hours}`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  getTransaction: (accessToken: string, projectSlug: string, id: string) =>
+    request<TransactionDetail>(
+      `/api/v1/projects/${projectSlug}/transactions/${id}`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  slowestTransactionsByName: (
+    accessToken: string,
+    projectSlug: string,
+    name: string,
+  ) =>
+    request<SlowTransactionRow[]>(
+      `/api/v1/projects/${projectSlug}/transactions-by-name?name=${encodeURIComponent(name)}`,
+      { method: "GET" },
       accessToken,
     ),
 };
