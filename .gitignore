@@ -7,6 +7,11 @@
 frontend/node_modules/
 frontend/.next/
 
+# SDKs
+sdks/**/node_modules/
+sdks/**/dist/
+sdks/**/*.egg-info/
+
 # Backend
 backend/.venv/
 backend/__pycache__/
