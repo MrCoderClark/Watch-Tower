@@ -8,7 +8,7 @@ for the phase you're on.
 
 ---
 
-## Phase 0 — Foundations (1 week)
+## Phase 0 — Foundations (1 week)  ·  **Done** (merged into `main`, 2026-07-27)
 
 Goal: an app skeleton with auth, orgs, projects, and a health endpoint.
 
@@ -16,8 +16,8 @@ Goal: an app skeleton with auth, orgs, projects, and a health endpoint.
 - Alembic wired to async engine; first migration is the `organizations`, `teams`,
   `users`, `memberships`, `projects`, `project_keys` tables.
 - Auth: email+password signup/login, JWT access + refresh, `Depends(current_user)`.
-- Frontend: Auth.js credentials provider hitting the backend; `/login`, `/signup`,
-  `/dashboard` shell with sidebar + org switcher.
+- Frontend: in-house AuthProvider hitting the backend (Auth.js deferred until we
+  need OAuth); `/login`, `/signup`, `/dashboard` shell with sidebar + org switcher.
 - `GET /api/v1/health` returns `{ok: true, db: true}`.
 
 Exit: a user can sign up, create an org, create a project, and see an empty dashboard.
@@ -26,7 +26,7 @@ Specs: `architecture.md`, `data-model.md`, `organizations-auth.md`.
 
 ---
 
-## Phase 1 — Error tracking (2 weeks)
+## Phase 1 — Error tracking (2 weeks)  ·  **Done** (PR #1 merged into `main`, 2026-07-29)
 
 Goal: the Sentry-style core. Ingest → group → view → resolve.
 
@@ -43,7 +43,7 @@ Specs: `ingest.md`, `error-tracking.md`.
 
 ---
 
-## Phase 2 — SDK (1 week)
+## Phase 2 — SDK (1 week)  ·  **Next**
 
 Goal: real apps can send events without hand-rolling JSON.
 
