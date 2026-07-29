@@ -28,6 +28,11 @@ class WatchtowerMiddleware:
 
         method = scope.get("method", "GET")
         path = scope.get("path", "/")
+        # Self-monitoring: never wrap ingest calls, or every request the SDK
+        # sends becomes a new transaction and we recurse forever.
+        if path.startswith("/api/v1/ingest/"):
+            await self.app(scope, receive, send)
+            return
         # ponytail: raw path, no route-pattern extraction. Route param collapse
         # (/users/{id}) needs the app's router; add when high-cardinality paths
         # start blowing up the transactions list.

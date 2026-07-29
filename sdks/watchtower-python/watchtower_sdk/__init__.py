@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import atexit
 import sys
+import threading
 import traceback
 import uuid
 from datetime import datetime, timezone
@@ -82,40 +83,42 @@ def _build(overrides: dict) -> dict:
     }
 
 
-def _send(event: dict) -> None:
+def _post_bg(url: str, body: list[dict]) -> None:
+    """Fire an ingest POST on a daemon thread so the caller's event loop
+    (if any) doesn't block. Sync httpx inside an async handler otherwise
+    stalls uvicorn's single worker."""
     if _cfg is None or _client is None:
+        return
+    key = _cfg["key"]
+    client = _client
+    def _run() -> None:
+        try:
+            client.post(url, headers={"X-Watchtower-Key": key}, json=body)
+        except Exception:
+            pass
+    threading.Thread(target=_run, daemon=True).start()
+
+
+def _send(event: dict) -> None:
+    if _cfg is None:
         return
     final = _cfg["before_send"](event) if _cfg["before_send"] else event
     if final is None:
         return
     # ponytail: fire-and-forget, single-event array. Ingest accepts batches so
     # buffered flush (30 events / 5s) is a drop-in upgrade when volume warrants.
-    try:
-        _client.post(
-            _cfg["url"],
-            headers={"X-Watchtower-Key": _cfg["key"]},
-            json=[final],
-        )
-    except Exception:
-        pass
+    _post_bg(_cfg["url"], [final])
 
 
 def _send_transaction(txn: Transaction) -> None:
-    if _cfg is None or _client is None:
+    if _cfg is None:
         return
     envelope = txn.to_envelope(
         environment=_cfg["environment"],
         release=_cfg["release"],
         sdk=_SDK_INFO,
     )
-    try:
-        _client.post(
-            _cfg["url"].replace("/events", "/transactions"),
-            headers={"X-Watchtower-Key": _cfg["key"]},
-            json=[envelope],
-        )
-    except Exception:
-        pass
+    _post_bg(_cfg["url"].replace("/events", "/transactions"), [envelope])
 
 
 def capture_exception(exc_info: Any = None) -> str | None:

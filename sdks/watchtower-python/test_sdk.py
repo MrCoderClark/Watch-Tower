@@ -16,14 +16,17 @@ import watchtower_sdk as wt
 
 def _patch_client():
     sent = []
-    client = MagicMock()
 
-    def _post(url, headers=None, json=None):
-        sent.append({"url": url, "headers": headers, "body": json})
-        return MagicMock(status_code=202)
+    def _capture(url, body):
+        sent.append(
+            {
+                "url": url,
+                "headers": {"X-Watchtower-Key": wt._cfg["key"]},
+                "body": body,
+            }
+        )
 
-    client.post.side_effect = _post
-    wt._client = client
+    wt._post_bg = _capture
     return sent
 
 
