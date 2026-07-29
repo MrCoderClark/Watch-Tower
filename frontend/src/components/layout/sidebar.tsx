@@ -16,6 +16,7 @@ import {
   Plus,
   Rows3,
   ScrollText,
+  Server,
   Settings,
   Zap,
 } from "lucide-react";
@@ -34,6 +35,7 @@ const NAV = [
   { href: "/dashboard/traces", label: "Traces", icon: Rows3 },
   { href: "/dashboard/logs", label: "Logs", icon: ScrollText },
   { href: "/dashboard/uptime", label: "Uptime", icon: Activity },
+  { href: "/dashboard/hosts", label: "Hosts", icon: Server },
   { href: "/dashboard/alerts", label: "Alerts", icon: Bell },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
