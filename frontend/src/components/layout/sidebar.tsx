@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  Activity,
   Bell,
   Check,
   ChevronDown,
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/dashboard/releases", label: "Releases", icon: Package },
   { href: "/dashboard/performance", label: "Performance", icon: Zap },
   { href: "/dashboard/traces", label: "Traces", icon: Rows3 },
+  { href: "/dashboard/uptime", label: "Uptime", icon: Activity },
   { href: "/dashboard/alerts", label: "Alerts", icon: Bell },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
