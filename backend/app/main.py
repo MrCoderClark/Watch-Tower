@@ -51,9 +51,14 @@ app.add_middleware(
 )
 
 if settings.internal_dsn:
+    import logging as _stdlib_logging
+    from watchtower_sdk.logging import WatchtowerLogHandler
+
     wt_init(dsn=settings.internal_dsn, environment=settings.environment, install_excepthook=False)
     app.add_middleware(WatchtowerMiddleware)
     wt_instrument_engine(engine)
+    _stdlib_logging.getLogger().addHandler(WatchtowerLogHandler())
+    _stdlib_logging.getLogger().setLevel(_stdlib_logging.INFO)
 
 app.include_router(api_router)
 
