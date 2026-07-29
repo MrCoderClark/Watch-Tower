@@ -15,8 +15,21 @@ from watchtower_sdk.sqlalchemy import instrument_engine as wt_instrument_engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
-    await engine.dispose()
+    import asyncio
+    worker_task: asyncio.Task | None = None
+    if get_settings().run_uptime_worker:
+        from app.monitoring.uptime_worker import run_worker
+        worker_task = asyncio.create_task(run_worker())
+    try:
+        yield
+    finally:
+        if worker_task is not None:
+            worker_task.cancel()
+            try:
+                await worker_task
+            except (asyncio.CancelledError, Exception):
+                pass
+        await engine.dispose()
 
 
 settings = get_settings()

@@ -2,6 +2,7 @@ from app.db.base import Base
 from app.models.auth import RefreshToken
 from app.models.events import Event, Issue, IssueStatus, Level
 from app.models.performance import Span, Transaction
+from app.models.uptime import UptimeCheck, UptimeResult
 from app.models.tenancy import (
     KeyKind,
     Membership,
@@ -31,5 +32,7 @@ __all__ = [
     "Team",
     "TeamMembership",
     "Transaction",
+    "UptimeCheck",
+    "UptimeResult",
     "User",
 ]

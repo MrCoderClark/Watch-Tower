@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
 
     internal_dsn: str | None = None  # self-monitor via watchtower-sdk; unset → no-op
+    slack_webhook_url: str | None = None  # uptime alert channel; unset → alerts skipped
+    run_uptime_worker: bool = True  # attach the worker to the API lifespan (dev)
 
     cors_origins: list[str] = [
         "http://localhost:3000",
