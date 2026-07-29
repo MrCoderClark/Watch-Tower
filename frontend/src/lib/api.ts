@@ -19,6 +19,11 @@ import type {
   TransactionDetail,
 } from "@/types/transactions";
 import type {
+  UptimeCheck,
+  UptimeCheckCreate,
+  UptimeCheckUpdate,
+} from "@/types/uptime";
+import type {
   Org,
   Project,
   ProjectCreateInput,
@@ -213,6 +218,47 @@ export const api = {
     request<SlowTransactionRow[]>(
       `/api/v1/projects/${projectSlug}/transactions-by-name?name=${encodeURIComponent(name)}`,
       { method: "GET" },
+      accessToken,
+    ),
+
+  listUptimeChecks: (accessToken: string, projectSlug: string) =>
+    request<UptimeCheck[]>(
+      `/api/v1/projects/${projectSlug}/uptime/checks`,
+      { method: "GET" },
+      accessToken,
+    ),
+
+  createUptimeCheck: (
+    accessToken: string,
+    projectSlug: string,
+    input: UptimeCheckCreate,
+  ) =>
+    request<UptimeCheck>(
+      `/api/v1/projects/${projectSlug}/uptime/checks`,
+      { method: "POST", body: JSON.stringify(input) },
+      accessToken,
+    ),
+
+  updateUptimeCheck: (
+    accessToken: string,
+    projectSlug: string,
+    checkId: string,
+    input: UptimeCheckUpdate,
+  ) =>
+    request<UptimeCheck>(
+      `/api/v1/projects/${projectSlug}/uptime/checks/${checkId}`,
+      { method: "PATCH", body: JSON.stringify(input) },
+      accessToken,
+    ),
+
+  deleteUptimeCheck: (
+    accessToken: string,
+    projectSlug: string,
+    checkId: string,
+  ) =>
+    request<void>(
+      `/api/v1/projects/${projectSlug}/uptime/checks/${checkId}`,
+      { method: "DELETE" },
       accessToken,
     ),
 };
