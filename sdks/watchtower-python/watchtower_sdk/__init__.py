@@ -31,7 +31,7 @@ _client: httpx.Client | None = None
 _FLUSH_INTERVAL_S = 5.0
 _FLUSH_MAX = 30
 _queue_lock = threading.Lock()
-_queues: dict[str, list[dict]] = {"events": [], "transactions": []}
+_queues: dict[str, list[dict]] = {"events": [], "transactions": [], "logs": []}
 _flush_thread: threading.Thread | None = None
 
 
@@ -97,9 +97,9 @@ def _build(overrides: dict) -> dict:
 
 def _endpoint_url(kind: str) -> str:
     assert _cfg is not None
-    return _cfg["url"] if kind == "events" else _cfg["url"].replace(
-        "/events", "/transactions"
-    )
+    if kind == "events":
+        return _cfg["url"]
+    return _cfg["url"].replace("/events", f"/{kind}")
 
 
 def _enqueue(kind: str, envelope: dict) -> None:
@@ -141,12 +141,11 @@ def _flush_loop() -> None:
 
 def _flush_all() -> None:
     with _queue_lock:
-        events = _queues["events"]
-        transactions = _queues["transactions"]
-        _queues["events"] = []
-        _queues["transactions"] = []
-    _do_post("events", events)
-    _do_post("transactions", transactions)
+        snapshot = {k: v for k, v in _queues.items()}
+        for k in _queues:
+            _queues[k] = []
+    for kind, batch in snapshot.items():
+        _do_post(kind, batch)
 
 
 def _ensure_flusher() -> None:
