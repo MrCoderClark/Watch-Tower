@@ -17,17 +17,23 @@ import watchtower_sdk as wt
 def _patch_client():
     sent = []
 
-    def _capture(url, body):
+    def _capture(kind, batch):
+        if not batch:
+            return
         sent.append(
             {
-                "url": url,
+                "url": wt._endpoint_url(kind),
                 "headers": {"X-Watchtower-Key": wt._cfg["key"]},
-                "body": body,
+                "body": list(batch),
             }
         )
 
-    wt._post_bg = _capture
+    wt._do_post = _capture
     return sent
+
+
+def _flush():
+    wt._flush_all()
 
 
 def test_capture_exception():
@@ -44,6 +50,7 @@ def test_capture_exception():
         raise ValueError("boom")
     except ValueError:
         eid = wt.capture_exception()
+    _flush()
 
     assert eid is not None
     assert len(sent) == 1
@@ -68,6 +75,7 @@ def test_capture_message():
     wt.init(dsn="http://localhost:8000/wt_pub_test", install_excepthook=False)
     sent = _patch_client()
     eid = wt.capture_message("hello", level="warning")
+    _flush()
     assert eid is not None
     [event] = sent[0]["body"]
     assert event["message"] == "hello"
@@ -95,6 +103,7 @@ def test_start_transaction_with_spans():
             pass
         with wt.start_span("db.query", "SELECT 2"):
             pass
+    _flush()
     assert len(sent) == 1
     assert sent[0]["url"].endswith("/api/v1/ingest/transactions")
     [env] = sent[0]["body"]
