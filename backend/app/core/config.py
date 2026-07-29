@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     refresh_token_days: int = 30
     jwt_algorithm: str = "HS256"
 
+    internal_dsn: str | None = None  # self-monitor via watchtower-sdk; unset → no-op
+
     cors_origins: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",

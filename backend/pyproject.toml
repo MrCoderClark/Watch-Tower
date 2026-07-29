@@ -19,7 +19,11 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "sqlalchemy>=2.0.51",
     "uvicorn>=0.51.0",
+    "watchtower-sdk",
 ]
+
+[tool.uv.sources]
+watchtower-sdk = { path = "../sdks/watchtower-python", editable = true }
 
 [dependency-groups]
 dev = [
