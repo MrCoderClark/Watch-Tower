@@ -1,0 +1,4 @@
+# Copy to ~/.watchtower/agent.toml and edit.
+dsn = "http://localhost:8000/wt_sec_YOURKEY"
+# hostname = "my-machine"   # optional; defaults to socket.gethostname()
+interval_seconds = 60
