@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Bell, Settings } from "lucide-react";
 
 export function Header({
@@ -19,20 +20,20 @@ export function Header({
         )}
       </div>
       <div className="flex items-center gap-1">
-        <button
-          type="button"
+        <Link
+          href="/dashboard/alerts"
           className="rounded-md p-2 text-wt-text-muted hover:bg-wt-bg-2 hover:text-wt-text"
-          aria-label="Notifications"
+          aria-label="Alerts"
         >
           <Bell strokeWidth={1.5} className="size-4" />
-        </button>
-        <button
-          type="button"
+        </Link>
+        <Link
+          href="/dashboard/settings"
           className="rounded-md p-2 text-wt-text-muted hover:bg-wt-bg-2 hover:text-wt-text"
           aria-label="Settings"
         >
           <Settings strokeWidth={1.5} className="size-4" />
-        </button>
+        </Link>
       </div>
     </header>
   );
